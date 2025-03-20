@@ -10,29 +10,36 @@ interface InputFormProps {
 
 const InputForm: React.FC<InputFormProps> = ({ todos, setTodos, editingTodo, setEditingTodo }) => {
   const [text, setText] = useState('');
-  const [description, setDescription] = useState(''); // Add state for description
-  const [priority, setPriority] = useState<'High' | 'Medium' | 'Low'>('Low');
+  const [description, setDescription] = useState('');
+  const [priority, setPriority] = useState<'High' | 'Medium' | 'Low' | ''>(''); // Allow empty priority initially
   const [tags, setTags] = useState<string[]>([]);
   const [deadline, setDeadline] = useState('');
 
   React.useEffect(() => {
     if (editingTodo) {
       setText(editingTodo.text);
-      setDescription(editingTodo.description); // Populate description when editing
-      setPriority(editingTodo.priority);
+      setDescription(editingTodo.description);
+      setPriority(editingTodo.priority as '' | 'High' | 'Medium' | 'Low');
       setTags(editingTodo.tags);
       setDeadline(editingTodo.deadline);
     } else {
       setText('');
-      setDescription(''); // Reset description
-      setPriority('Low');
+      setDescription('');
+      setPriority('');
       setTags([]);
       setDeadline('');
     }
   }, [editingTodo]);
 
   const handleSubmit = () => {
-    if (!text || !description || !deadline) return; // Ensure description is required
+    const missingFields = [];
+    if (!text) missingFields.push('Text');
+    if (!priority) missingFields.push('Priority');
+
+    if (missingFields.length > 0) {
+      alert(`The following fields are required: ${missingFields.join(', ')}`);
+      return;
+    }
 
     if (editingTodo) {
       const updatedTodos = todos.map((todo) =>
@@ -42,12 +49,12 @@ const InputForm: React.FC<InputFormProps> = ({ todos, setTodos, editingTodo, set
       );
       setTodos(updatedTodos);
       localStorage.setItem('todos', JSON.stringify(updatedTodos));
-      setEditingTodo(null); // Reset editing state
+      setEditingTodo(null);
     } else {
       const newTodo: Todo = {
         id: Date.now().toString(),
         text,
-        description, // Include description in new todo
+        description,
         priority,
         tags,
         deadline,
@@ -59,8 +66,8 @@ const InputForm: React.FC<InputFormProps> = ({ todos, setTodos, editingTodo, set
     }
 
     setText('');
-    setDescription(''); // Reset description
-    setPriority('Low');
+    setDescription('');
+    setPriority('');
     setTags([]);
     setDeadline('');
   };
@@ -82,7 +89,7 @@ const InputForm: React.FC<InputFormProps> = ({ todos, setTodos, editingTodo, set
         className="border p-2 rounded w-full mb-4"
       />
       <textarea
-        placeholder="Todo description"
+        placeholder="Todo description (optional)"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
         className="border p-2 rounded w-full mb-4"
@@ -104,7 +111,7 @@ const InputForm: React.FC<InputFormProps> = ({ todos, setTodos, editingTodo, set
         </div>
       </div>
       <div className="mb-4">
-        <label className="block mb-2 font-bold">Tags:</label>
+        <label className="block mb-2 font-bold">Tags (optional):</label>
         <div className="flex flex-row gap-2 flex-wrap">
           {['Work', 'Personal', 'Shopping', 'Health', 'Home', 'Fitness', 'Learning'].map((tag) => (
             <button
@@ -120,7 +127,7 @@ const InputForm: React.FC<InputFormProps> = ({ todos, setTodos, editingTodo, set
         </div>
       </div>
       <div className="mb-4">
-        <label className="block mb-2 font-bold">Deadline:</label>
+        <label className="block mb-2 font-bold">Deadline (optional):</label>
         <input
           type="date"
           value={deadline}
